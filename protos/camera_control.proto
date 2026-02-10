@@ -1,0 +1,194 @@
+syntax = "proto3";
+
+package protocol;
+
+// Follow the same order as the control ids in https://github.com/raspberrypi/libcamera
+message CameraControl {
+  enum Id {
+    AE_ENABLE                = 1;
+    AE_STATE                 = 2;
+    AE_METERING_MODE         = 3;
+    AE_CONSTRAINT_MODE       = 4;
+    AE_EXPOSURE_MODE         = 5;
+    EXPOSURE_VALUE           = 6;
+    EXPOSURE_TIME            = 7;
+    EXPOSURE_TIME_MODE       = 8;
+    ANALOGUE_GAIN            = 9;
+    ANALOGUE_GAIN_MODE       = 10;
+    AE_FLICKER_MODE          = 11;
+    AE_FLICKER_PERIOD        = 12;
+    AE_FLICKER_DETECTED      = 13;
+    BRIGHTNESS               = 14;
+    CONTRAST                 = 15;
+    LUX                      = 16;
+    AWB_ENABLE               = 17;
+    AWB_MODE                 = 18;
+    AWB_LOCKED               = 19;
+    COLOUR_GAINS             = 20;
+    COLOUR_TEMPERATURE       = 21;
+    SATURATION               = 22;
+    SENSOR_BLACK_LEVELS      = 23;
+    SHARPNESS                = 24;
+    FOCUS_FO_M               = 25;
+    COLOUR_CORRECTION_MATRIX = 26;
+    SCALER_CROP              = 27;
+    DIGITAL_GAIN             = 28;
+    FRAME_DURATION           = 29;
+    FRAME_DURATION_LIMITS    = 30;
+    SENSOR_TEMPERATURE       = 31;
+    SENSOR_TIMESTAMP         = 32;
+    AF_MODE                  = 33;
+    AF_RANGE                 = 34;
+    AF_SPEED                 = 35;
+    AF_METERING              = 36;
+    AF_WINDOWS               = 37;
+    AF_TRIGGER               = 38;
+    AF_PAUSE                 = 39;
+    LENS_POSITION            = 40;
+    AF_STATE                 = 41;
+    AF_PAUSE_STATE           = 42;
+    HDR_MODE                 = 43;
+    HDR_CHANNEL              = 44;
+    GAMMA                    = 45;
+    DEBUG_METADATA_ENABLE    = 46;
+    FRAME_WALL_CLOCK         = 47;
+  }
+
+  enum AeStateEnum {
+    AE_STATE_IDLE      = 0;
+    AE_STATE_SEARCHING = 1;
+    AE_STATE_CONVERGED = 2;
+  }
+
+  enum AeMeteringModeEnum {
+    METERING_CENTRE_WEIGHTED = 0;
+    METERING_SPOT            = 1;
+    METERING_MATRIX          = 2;
+    METERING_CUSTOM          = 3;
+  }
+
+  enum AeConstraintModeEnum {
+    CONSTRAINT_NORMAL    = 0;
+    CONSTRAINT_HIGHLIGHT = 1;
+    CONSTRAINT_SHADOWS   = 2;
+    CONSTRAINT_CUSTOM    = 3;
+  }
+
+  enum AeExposureModeEnum {
+    EXPOSURE_NORMAL = 0;
+    EXPOSURE_SHORT  = 1;
+    EXPOSURE_LONG   = 2;
+    EXPOSURE_CUSTOM = 3;
+  }
+
+  enum ExposureTimeModeEnum {
+    EXPOSURE_TIME_MODE_AUTO   = 0;
+    EXPOSURE_TIME_MODE_MANUAL = 1;
+  }
+
+  enum AnalogueGainModeEnum {
+    ANALOGUE_GAIN_MODE_AUTO   = 0;
+    ANALOGUE_GAIN_MODE_MANUAL = 1;
+  }
+
+  enum AeFlickerModeEnum {
+    FLICKER_OFF    = 0;
+    FLICKER_MANUAL = 1;
+    FLICKER_AUTO   = 2;
+  }
+
+  enum AwbModeEnum {
+    AWB_AUTO         = 0;
+    AWB_INCANDESCENT = 1;
+    AWB_TUNGSTEN     = 2;
+    AWB_FLUORESCENT  = 3;
+    AWB_INDOOR       = 4;
+    AWB_DAYLIGHT     = 5;
+    AWB_CLOUDY       = 6;
+    AWB_CUSTOM       = 7;
+  }
+
+  enum AfModeEnum {
+    AF_MODE_MANUAL     = 0;
+    AF_MODE_AUTO       = 1;
+    AF_MODE_CONTINUOUS = 2;
+  }
+
+  enum AfRangeEnum {
+    AF_RANGE_NORMAL = 0;
+    AF_RANGE_MACRO  = 1;
+    AF_RANGE_FULL   = 2;
+  }
+
+  enum AfSpeedEnum {
+    AF_SPEED_NORMAL = 0;
+    AF_SPEED_FAST   = 1;
+  }
+
+  enum AfMeteringEnum {
+    AF_METERING_AUTO    = 0;
+    AF_METERING_WINDOWS = 1;
+  }
+
+  enum AfTriggerEnum {
+    AF_TRIGGER_START  = 0;
+    AF_TRIGGER_CANCEL = 1;
+  }
+
+  enum AfPauseEnum {
+    AF_PAUSE_IMMEDIATE = 0;
+    AF_PAUSE_DEFERRED  = 1;
+    AF_PAUSE_RESUME    = 2;
+  }
+
+  enum AfStateEnum {
+    AF_STATE_IDLE     = 0;
+    AF_STATE_SCANNING = 1;
+    AF_STATE_FOCUSED  = 2;
+    AF_STATE_FAILED   = 3;
+  }
+
+  enum AfPauseStateEnum {
+    AF_PAUSE_STATE_RUNNING = 0;
+    AF_PAUSE_STATE_PAUSING = 1;
+    AF_PAUSE_STATE_PAUSED  = 2;
+  }
+
+  enum HdrModeEnum {
+    HDR_MODE_OFF                     = 0;
+    HDR_MODE_MULTI_EXPOSURE_UNMERGED = 1;
+    HDR_MODE_MULTI_EXPOSURE          = 2;
+    HDR_MODE_SINGLE_EXPOSURE         = 3;
+    HDR_MODE_NIGHT                   = 4;
+  }
+
+  enum HdrChannelEnum {
+    HDR_CHANNEL_NONE   = 0;
+    HDR_CHANNEL_SHORT  = 1;
+    HDR_CHANNEL_MEDIUM = 2;
+    HDR_CHANNEL_LONG   = 3;
+  }
+
+  message Value {
+    oneof value {
+      AeStateEnum          ae_state           = 1;
+      AeMeteringModeEnum   ae_metering_mode   = 2;
+      AeConstraintModeEnum ae_constraint_mode = 3;
+      AeExposureModeEnum   ae_exposure_mode   = 4;
+      ExposureTimeModeEnum exposure_time_mode = 5;
+      AnalogueGainModeEnum analogue_gain_mode = 6;
+      AeFlickerModeEnum    ae_flicker_mode    = 7;
+      AwbModeEnum          awb_mode           = 8;
+      AfModeEnum           af_mode            = 9;
+      AfRangeEnum          af_range           = 10;
+      AfSpeedEnum          af_speed           = 11;
+      AfMeteringEnum       af_metering        = 12;
+      AfTriggerEnum        af_trigger         = 13;
+      AfPauseEnum          af_pause           = 14;
+      AfStateEnum          af_state           = 15;
+      AfPauseStateEnum     af_pause_state     = 16;
+      HdrModeEnum          hdr_mode           = 17;
+      HdrChannelEnum       hdr_channel        = 18;
+    }
+  }
+}

@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package protocol;
+
+import "camera_control.proto";
+
+message Timestamp {
+  uint64          monotonic_ns = 1; // monotonic timestamp in nanoseconds for measuring intervals
+  optional uint64 unix_ns      = 2; // optional wall clock timestamp in nanoseconds for logging purposes
+}
+
+// CommandType defines the type of command being sent in the packet
+enum CommandType {
+  DISCONNECT     = 0;
+  CONTROL_CAMERA = 1;
+  TAKE_SNAPSHOT  = 2;
+  QUERY_FILE     = 3;
+  TRANSFER_FILE  = 4;
+  CUSTOM         = 100;
+}
+
+message DisconnectRequest {
+  enum DisconnectReason {
+    UNKNOWN          = 0;
+    CLIENT_INITIATED = 1;
+  }
+  DisconnectReason reason = 1;
+}
+
+// CameraControlRequest is used to send camera control commands, e.g., "exposure", "gain", etc.
+message ControlCameraRequest {
+  CameraControl.Id    id    = 1;
+  CameraControl.Value value = 2;
+}
+
+message TakeSnapshotRequest {
+  uint32 quality = 1; // jpeg quality (0-100)
+}
+
+// Video file metadata request structures
+message QueryFileRequest {
+  enum QueryFileType  {
+    LATEST_FILE = 0; // Request the latest file
+    BEFORE_FILE = 1; // Request older files with the specified file name as parameter, e.g., "20260719_103000.mp4"
+    BEFORE_TIME = 2; // Request files older than the specified timestamp with parameter e.g., "20260719_103000"
+  }
+  QueryFileType type      = 1;
+  string        parameter = 2;
+}
+
+// Video file metadata response structure
+message QueryFileResponse {
+  message FileEntry {
+    string filepath     = 1;
+    uint32 duration_sec = 2;
+    string thumbnail    = 3; // base64 jpeg image for previewing
+  }
+  repeated FileEntry files = 1;
+}
+
+// Packet is the main message structure for communication
+message Packet {
+  CommandType type = 1;
+
+  oneof payload {
+    // Requests
+    DisconnectRequest    disconnection_request  = 2;
+    ControlCameraRequest control_camera_request = 3;
+    TakeSnapshotRequest  take_snapshot_request  = 4;
+    QueryFileRequest     query_file_request     = 5;
+
+    // Generic streaming data for responses, file transfer or custom content
+    StreamData.Header  stream_header  = 6;
+    StreamData.Chunk   stream_chunk   = 7;
+    StreamData.Trailer stream_trailer = 8;
+  }
+}
+
+message StreamData {
+  message Header  {
+    string stream_id    = 1;
+    uint64 total_length = 2;
+  }
+
+  message Chunk  {
+    string stream_id = 1;
+    uint64 offset    = 2;
+    bytes  data      = 3;
+  }
+
+  message Trailer  {
+    string stream_id = 1;
+    string reason    = 2;
+  }
+}
