@@ -5,6 +5,7 @@ package protocol;
 // Follow the same order as the control ids in https://github.com/raspberrypi/libcamera
 message CameraControl {
   enum Id {
+    UNKNOWN                  = 0;
     AE_ENABLE                = 1;
     AE_STATE                 = 2;
     AE_METERING_MODE         = 3;
