@@ -16,7 +16,7 @@ enum CommandType {
   TAKE_SNAPSHOT  = 2;
   QUERY_FILE     = 3;
   TRANSFER_FILE  = 4;
-  CUSTOM         = 100;
+  CUSTOM         = 100; // For IPC
 }
 
 message DisconnectRequest {
@@ -58,6 +58,10 @@ message QueryFileResponse {
   repeated FileEntry files = 1;
 }
 
+message TransferFileRequest {
+  string filepath = 1; // The path of the file to transfer.
+}
+
 // Packet is the main message structure for communication
 message Packet {
   CommandType type = 1;
@@ -68,11 +72,15 @@ message Packet {
     ControlCameraRequest control_camera_request = 3;
     TakeSnapshotRequest  take_snapshot_request  = 4;
     QueryFileRequest     query_file_request     = 5;
+    TransferFileRequest  transfer_file_request  = 6;
 
-    // Generic streaming data for responses, file transfer or custom content
-    StreamData.Header  stream_header  = 6;
-    StreamData.Chunk   stream_chunk   = 7;
-    StreamData.Trailer stream_trailer = 8;
+    // Generic streaming data for response file transfer or custom content
+    StreamData.Header  stream_header  = 7;
+    StreamData.Chunk   stream_chunk   = 8;
+    StreamData.Trailer stream_trailer = 9;
+
+    // For IPC, the payload is a raw byte array (e.g., JSON string) that can be parsed by the application
+    bytes custom_command = 100;
   }
 }
 
