@@ -4,11 +4,6 @@ package protocol;
 
 import "camera_control.proto";
 
-message Timestamp {
-  uint64          monotonic_ns = 1; // monotonic timestamp in nanoseconds for measuring intervals
-  optional uint64 unix_ns      = 2; // optional wall clock timestamp in nanoseconds for logging purposes
-}
-
 // CommandType defines the type of command being sent in the packet
 enum CommandType {
   DISCONNECT     = 0;
@@ -29,32 +24,35 @@ message DisconnectRequest {
 
 // CameraControlRequest is used to send camera control commands, e.g., "exposure", "gain", etc.
 message ControlCameraRequest {
-  CameraControl.Id    id    = 1;
-  CameraControl.Value value = 2;
+  CameraControlId id    = 1;
+  uint32          value = 2;
 }
 
 message TakeSnapshotRequest {
   uint32 quality = 1; // jpeg quality (0-100)
 }
 
-// Video file metadata request structures
+// QueryFileType defines the way of file query
+enum QueryFileType  {
+  LATEST_FILE = 0; // Request the latest file
+  BEFORE_FILE = 1; // Request older files with the specified file name as parameter, e.g., "20260719_103000.mp4"
+  BEFORE_TIME = 2; // Request files older than the specified time with parameter e.g., "20260719_103000"
+}
+
+// Video file request structures
 message QueryFileRequest {
-  enum QueryFileType  {
-    LATEST_FILE = 0; // Request the latest file
-    BEFORE_FILE = 1; // Request older files with the specified file name as parameter, e.g., "20260719_103000.mp4"
-    BEFORE_TIME = 2; // Request files older than the specified timestamp with parameter e.g., "20260719_103000"
-  }
   QueryFileType type      = 1;
   string        parameter = 2;
 }
 
+message FileEntry {
+  string filepath     = 1;
+  uint32 duration_sec = 2;
+  string thumbnail    = 3; // base64 jpeg image for previewing
+}
+
 // Video file metadata response structure
 message QueryFileResponse {
-  message FileEntry {
-    string filepath     = 1;
-    uint32 duration_sec = 2;
-    string thumbnail    = 3; // base64 jpeg image for previewing
-  }
   repeated FileEntry files = 1;
 }
 
