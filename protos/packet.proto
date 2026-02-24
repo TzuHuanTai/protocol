@@ -16,6 +16,12 @@ enum CommandType {
   CUSTOM           = 100; // For IPC
 }
 
+// Response sent back to the client after START_RECORDING / STOP_RECORDING
+message RecordingResponse {
+  bool   is_recording = 1; // true = recording started, false = recording stopped
+  string filepath     = 2; // current recording file path (empty when stopped)
+}
+
 message DisconnectRequest {
   enum DisconnectReason {
     UNKNOWN          = 0;
@@ -73,6 +79,9 @@ message Packet {
     TakeSnapshotRequest  take_snapshot_request  = 4;
     QueryFileRequest     query_file_request     = 5;
     TransferFileRequest  transfer_file_request  = 6;
+
+    // Responses
+    RecordingResponse recording_response = 10;
 
     // Generic streaming data for response file transfer or custom content
     StreamData.Header  stream_header  = 7;
