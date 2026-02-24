@@ -6,12 +6,14 @@ import "camera_control.proto";
 
 // CommandType defines the type of command being sent in the packet
 enum CommandType {
-  DISCONNECT     = 0;
-  CONTROL_CAMERA = 1;
-  TAKE_SNAPSHOT  = 2;
-  QUERY_FILE     = 3;
-  TRANSFER_FILE  = 4;
-  CUSTOM         = 100; // For IPC
+  DISCONNECT       = 0;
+  CONTROL_CAMERA   = 1;
+  TAKE_SNAPSHOT    = 2;
+  QUERY_FILE       = 3;
+  TRANSFER_FILE    = 4;
+  START_RECORDING  = 5;
+  STOP_RECORDING   = 6;
+  CUSTOM           = 100; // For IPC
 }
 
 message DisconnectRequest {
