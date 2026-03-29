@@ -13,6 +13,7 @@ enum CommandType {
   TRANSFER_FILE    = 4;
   START_RECORDING  = 5;
   STOP_RECORDING   = 6;
+  TOGGLE_TRACKING  = 7;
   CUSTOM           = 100; // For IPC
 }
 
@@ -68,6 +69,14 @@ message TransferFileRequest {
   string filepath = 1; // The path of the file to transfer.
 }
 
+message ToggleTrackingRequest {
+  bool enable = 1; // true = enable overlay, false = disable
+}
+
+message ToggleTrackingResponse {
+  bool enabled = 1;
+}
+
 // Packet is the main message structure for communication
 message Packet {
   CommandType type = 1;
@@ -79,9 +88,11 @@ message Packet {
     TakeSnapshotRequest  take_snapshot_request  = 4;
     QueryFileRequest     query_file_request     = 5;
     TransferFileRequest  transfer_file_request  = 6;
+    ToggleTrackingRequest toggle_tracking_request = 11;
 
     // Responses
     RecordingResponse recording_response = 10;
+    ToggleTrackingResponse toggle_tracking_response = 12;
 
     // Generic streaming data for response file transfer or custom content
     StreamData.Header  stream_header  = 7;
