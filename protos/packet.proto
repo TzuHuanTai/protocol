@@ -48,10 +48,17 @@ enum QueryFileType  {
   BEFORE_TIME = 2; // Request files older than the specified time with parameter e.g., "20260719_103000"
 }
 
+// Defines the source/category of video files to query
+enum VideoSource {
+  RECORDING  = 0; // Default: regular recordings
+  TIMELAPSE  = 1; // Timelapse recordings
+}
+
 // Video file request structures
 message QueryFileRequest {
   QueryFileType type      = 1;
   string        parameter = 2;
+  VideoSource   source    = 3;
 }
 
 message FileEntry {
