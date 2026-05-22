@@ -49,7 +49,7 @@ enum QueryFileType  {
 }
 
 // Defines the source/category of video files to query
-enum VideoSource {
+enum VideoMode {
   RECORDING  = 0; // Default: regular recordings
   TIMELAPSE  = 1; // Timelapse recordings
 }
@@ -58,7 +58,7 @@ enum VideoSource {
 message QueryFileRequest {
   QueryFileType type      = 1;
   string        parameter = 2;
-  VideoSource   source    = 3;
+  VideoMode     mode      = 3;
 }
 
 message FileEntry {
@@ -70,6 +70,7 @@ message FileEntry {
 // Video file metadata response structure
 message QueryFileResponse {
   repeated FileEntry files = 1;
+  VideoMode          mode  = 2;
 }
 
 message TransferFileRequest {
