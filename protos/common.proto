@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package protocol;
+
+// Sender timestamp. Uses monotonic time for ordering and latency measurement.
+// unix_ns is optional wall-clock time.
+message Timestamp {
+  uint64          monotonic_ns = 1;
+  optional uint64 unix_ns      = 2;
+}

@@ -139,6 +139,23 @@ message Stream {
   }
 }
 
+// Payload relayed to a named IPC endpoint.
+// Endpoints are fixed at startup; unknown names are dropped.
+// Multiple consumers may attach to an endpoint.
+//
+// Reserved:
+//   ""         default socket (--enable-ipc), opaque bytes
+//   "gamepad"  InputReport (--enable-gamepad)
+//
+// Register new endpoints here to avoid name conflicts.
+message Ipc {
+  string endpoint = 1;
+  // Per-endpoint sequence. Lossy channels forward only newer messages.
+  // Zero means unsequenced.
+  uint64 sequence = 2;
+  bytes payload = 3;
+}
+
 // The envelope for everything on every channel. `body` says what kind of thing this is;
 // which particular one comes from that body's own oneof, so there is no separate type
 // field to fall out of step with it.
@@ -154,5 +171,6 @@ message Packet {
     // An IPC payload: opaque application bytes. Only when it fits in one message; a
     // larger one goes as a Stream on the same channel.
     bytes raw = 5;
+    Ipc ipc = 6;
   }
 }
