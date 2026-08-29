@@ -4,24 +4,7 @@ package protocol;
 
 import "camera_control.proto";
 
-// CommandType defines the type of command being sent in the packet
-enum CommandType {
-  DISCONNECT       = 0;
-  CONTROL_CAMERA   = 1;
-  TAKE_SNAPSHOT    = 2;
-  QUERY_FILE       = 3;
-  TRANSFER_FILE    = 4;
-  START_RECORDING  = 5;
-  STOP_RECORDING   = 6;
-  TOGGLE_TRACKING  = 7;
-  CUSTOM           = 100; // For IPC
-}
-
-// Response sent back to the client after START_RECORDING / STOP_RECORDING
-message RecordingResponse {
-  bool   is_recording = 1; // true = recording started, false = recording stopped
-  string filepath     = 2; // current recording file path
-}
+// ── Requests ────────────────────────────────────────────────────────────────
 
 message DisconnectRequest {
   enum DisconnectReason {
@@ -31,7 +14,7 @@ message DisconnectRequest {
   DisconnectReason reason = 1;
 }
 
-// CameraControlRequest is used to send camera control commands, e.g., "exposure", "gain", etc.
+// Sends camera control commands, e.g., "exposure", "gain", etc.
 message ControlCameraRequest {
   CameraControlId id    = 1;
   uint32          value = 2;
@@ -50,27 +33,14 @@ enum QueryFileType  {
 
 // Defines the source/category of video files to query
 enum VideoMode {
-  RECORDING  = 0; // Default: regular recordings
-  TIMELAPSE  = 1; // Timelapse recordings
+  RECORDING = 0; // Default: regular recordings
+  TIMELAPSE = 1; // Timelapse recordings
 }
 
-// Video file request structures
 message QueryFileRequest {
   QueryFileType type      = 1;
   string        parameter = 2;
   VideoMode     mode      = 3;
-}
-
-message FileEntry {
-  string filepath     = 1;
-  uint32 duration_sec = 2;
-  string thumbnail    = 3; // base64 jpeg image for previewing
-}
-
-// Video file metadata response structure
-message QueryFileResponse {
-  repeated FileEntry files = 1;
-  VideoMode          mode  = 2;
 }
 
 message TransferFileRequest {
@@ -81,51 +51,108 @@ message ToggleTrackingRequest {
   bool enable = 1; // true = enable overlay, false = disable
 }
 
+// No arguments, but still a message each: the arm of Request.payload they set is what
+// identifies them.
+message StartRecordingRequest {}
+
+message StopRecordingRequest {}
+
+// ── Responses ───────────────────────────────────────────────────────────────
+
+// Sent back to the client after a recording is started or stopped
+message RecordingResponse {
+  bool   is_recording = 1; // true = recording started, false = recording stopped
+  string filepath     = 2; // current recording file path
+}
+
 message ToggleTrackingResponse {
   bool enabled = 1;
 }
 
-// Packet is the main message structure for communication
-message Packet {
-  CommandType type = 1;
+message FileEntry {
+  string filepath     = 1;
+  uint32 duration_sec = 2;
+  string thumbnail    = 3; // base64 jpeg image for previewing
+}
 
+// Answers a QueryFileRequest. Always streamed as a Stream body, never inline: one
+// FileEntry.thumbnail alone can exceed the chunk size.
+message QueryFileResponse {
+  repeated FileEntry files = 1;
+  VideoMode          mode  = 2;
+}
+
+// ── Packet bodies ───────────────────────────────────────────────────────────
+
+// A client asking the device to do something.
+message Request {
   oneof payload {
-    // Requests
-    DisconnectRequest    disconnection_request  = 2;
-    ControlCameraRequest control_camera_request = 3;
-    TakeSnapshotRequest  take_snapshot_request  = 4;
-    QueryFileRequest     query_file_request     = 5;
-    TransferFileRequest  transfer_file_request  = 6;
-    ToggleTrackingRequest toggle_tracking_request = 11;
-
-    // Responses
-    RecordingResponse recording_response = 10;
-    ToggleTrackingResponse toggle_tracking_response = 12;
-
-    // Generic streaming data for response file transfer or custom content
-    StreamData.Header  stream_header  = 7;
-    StreamData.Chunk   stream_chunk   = 8;
-    StreamData.Trailer stream_trailer = 9;
-
-    // For IPC, the payload is a raw byte array (e.g., JSON string) that can be parsed by the application
-    bytes custom_command = 100;
+    DisconnectRequest     disconnect      = 1;
+    ControlCameraRequest  control_camera  = 2;
+    TakeSnapshotRequest   take_snapshot   = 3;
+    QueryFileRequest      query_file      = 4;
+    TransferFileRequest   transfer_file   = 5;
+    ToggleTrackingRequest toggle_tracking = 6;
+    StartRecordingRequest start_recording = 7;
+    StopRecordingRequest  stop_recording  = 8;
   }
 }
 
-message StreamData {
-  message Header  {
-    string stream_id    = 1;
-    uint64 total_length = 2;
+// A device answer small enough to travel inline on the command channel.
+message Response {
+  oneof payload {
+    RecordingResponse      recording       = 1;
+    ToggleTrackingResponse toggle_tracking = 2;
+  }
+}
+
+// A body too large for one datachannel message: a header, a run of chunks and a trailer
+// sharing a stream_id, so streams may interleave on an unordered channel and Chunk.offset
+// places each piece regardless of arrival order.
+//
+// Nothing here says what the body is: the enclosing request_id and the channel it arrived
+// on already do. mime_type is a hint, not the discriminator.
+message Stream {
+  message Header {
+    uint64 total_length = 1;
+    string mime_type    = 2; // optional, e.g. "image/jpeg", "video/mp4"
   }
 
-  message Chunk  {
-    string stream_id = 1;
-    uint64 offset    = 2;
-    bytes  data      = 3;
+  message Chunk {
+    uint64 offset = 1;
+    bytes  data   = 2;
   }
 
-  message Trailer  {
-    string stream_id = 1;
-    string reason    = 2;
+  message Trailer {
+    // Empty on a normal end. Non-empty means aborted: discard what was reassembled.
+    string reason = 1;
+  }
+
+  // Shared by the header, every chunk and the trailer of one transfer: the key a
+  // receiver assembles on.
+  string stream_id = 1;
+
+  oneof payload {
+    Header  header  = 2;
+    Chunk   chunk   = 3;
+    Trailer trailer = 4;
+  }
+}
+
+// The envelope for everything on every channel. `body` says what kind of thing this is;
+// which particular one comes from that body's own oneof, so there is no separate type
+// field to fall out of step with it.
+message Packet {
+  // Client-generated, echoed by the device on the matching response so concurrent
+  // requests of the same kind can be told apart. Empty on anything sent unprompted.
+  string request_id = 1;
+
+  oneof body {
+    Request  request  = 2;
+    Response response = 3;
+    Stream   stream   = 4;
+    // An IPC payload: opaque application bytes. Only when it fits in one message; a
+    // larger one goes as a Stream on the same channel.
+    bytes raw = 5;
   }
 }
